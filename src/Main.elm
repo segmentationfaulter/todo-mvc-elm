@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Html as H
 import Html.Attributes as Attr
+import Html.Events as Events
 
 
 main =
@@ -18,13 +19,13 @@ main =
 
 
 type alias Model =
-    { textInput : String
+    { newTodo : String
     }
 
 
 initialModel : Model
 initialModel =
-    { textInput = ""
+    { newTodo = ""
     }
 
 
@@ -38,7 +39,9 @@ type Msg
 
 update : Msg -> Model -> Model
 update msg model =
-    model
+    case msg of
+        InputChanged newTodo ->
+            Model newTodo
 
 
 
@@ -57,5 +60,5 @@ inputElement model =
     H.header
         [ Attr.class "header" ]
         [ H.h1 [] [ H.text "todos" ]
-        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True ] []
+        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged ] []
         ]
