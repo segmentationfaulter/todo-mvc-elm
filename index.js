@@ -1,5 +1,5 @@
 import { Elm } from './src/Main.elm'
 
 Elm.Main.init({
-  node: document.querySelector('#app')
+  node: document.getElementById('app')
 })
