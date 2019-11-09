@@ -103,4 +103,7 @@ createNewTodo keyCode model =
 
 isValidTaskString: String -> Bool
 isValidTaskString newTodo =
-    (newTodo |> String.trim |> String.length) > 0
+    let
+        isGreaterThanZero = (<) 0
+    in
+        newTodo |> String.trim |> String.length |> isGreaterThanZero
