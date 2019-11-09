@@ -75,11 +75,7 @@ view model =
     H.section
         [ Attr.class "todoapp" ]
         [ inputElement model
-        , if List.isEmpty model.tasks then
-            H.text ""
-
-          else
-            renderTodos model
+        , renderTodos model
         ]
 
 
@@ -97,16 +93,23 @@ renderTodos { tasks } =
     let
         inputId =
             "toggle-all"
+
+        thereAreNoTasks =
+            List.isEmpty tasks
     in
-    H.section
-        [ Attr.class "main" ]
-        [ H.input [ Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted ] []
-        , H.label [ Attr.for inputId ] [ H.text "Mark all as complete" ]
-        , HtmlKeyed.ul [ Attr.class "todo-list" ] (List.indexedMap renderTask tasks)
-        ]
+    if thereAreNoTasks then
+        H.text ""
+
+    else
+        H.section
+            [ Attr.class "main" ]
+            [ H.input [ Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted ] []
+            , H.label [ Attr.for inputId ] [ H.text "Mark all as complete" ]
+            , HtmlKeyed.ul [ Attr.class "todo-list" ] (List.indexedMap renderTask tasks)
+            ]
 
 
-renderTask : Int -> Task -> (String, H.Html Msg)
+renderTask : Int -> Task -> ( String, H.Html Msg )
 renderTask index task =
     let
         taskHtml =
@@ -128,7 +131,7 @@ renderTask index task =
         key =
             String.fromInt index
     in
-        (key, taskHtml)
+    ( key, taskHtml )
 
 
 
