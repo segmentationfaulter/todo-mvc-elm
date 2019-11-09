@@ -73,7 +73,7 @@ inputElement model =
     H.header
         [ Attr.class "header" ]
         [ H.h1 [] [ H.text "todos" ]
-        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged, onKeyUp KeyPressed ] []
+        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged, onKeyUp KeyPressed, Attr.value model.newTodo ] []
         ]
 
 
