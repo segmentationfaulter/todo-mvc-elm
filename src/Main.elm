@@ -48,6 +48,7 @@ type Msg
     | KeyPressed Int
     | MarkAllCompleted Bool
     | TaskCompletionToggled Int Bool
+    | DeleteTask Int
 
 
 update : Msg -> Model -> Model
@@ -64,6 +65,9 @@ update msg model =
 
         TaskCompletionToggled index completed ->
             { model | tasks = toggleTaskCompletion model.tasks index completed }
+
+        DeleteTask index ->
+            { model | tasks = removeFromList index model.tasks}
 
 
 
@@ -125,6 +129,7 @@ renderTask index task =
                 [ H.div [ Attr.class "view" ]
                     [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled index) ] []
                     , H.label [] [ H.text task.todo ]
+                    , H.button [Attr.class "destroy", Events.onClick (DeleteTask index)] []
                     ]
                 ]
 
@@ -176,3 +181,8 @@ toggleTaskCompletion tasks targetIndex completed =
                 task
     in
     List.indexedMap toggler tasks
+
+
+removeFromList: Int -> List a -> List a
+removeFromList i xs =
+  (List.take i xs) ++ (List.drop (i+1) xs) 
