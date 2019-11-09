@@ -45,6 +45,7 @@ initialModel =
 type Msg
     = InputChanged String
     | KeyPressed Int
+    | MarkAllCompleted Bool
 
 
 update : Msg -> Model -> Model
@@ -55,6 +56,9 @@ update msg model =
 
         KeyPressed keyCode ->
             createNewTodo keyCode model
+
+        MarkAllCompleted completed ->
+            { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
 
 
 
@@ -89,7 +93,7 @@ renderTodos { tasks } =
     H.section
         [Attr.class "main"]
         [
-            H.input [Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox"] [],
+            H.input [Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted] [],
             H.label [Attr.for inputId] [H.text "Mark all as complete"],
             H.ul [Attr.class "todo-list"] (List.map renderTask tasks)
         ]
