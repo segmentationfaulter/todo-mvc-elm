@@ -5,6 +5,7 @@ import Html as H
 import Html.Attributes as Attr
 import Html.Events as Events
 import Json.Decode as Decode
+import String
 
 
 main =
@@ -92,8 +93,14 @@ createNewTodo keyCode model =
         enterKeyCode =
             13
     in
-    if keyCode == enterKeyCode then
-        Model "" (model.tasks ++ [Task model.newTodo False])
+    if keyCode == enterKeyCode && isValidTaskString model.newTodo
+    then
+        Model "" (model.tasks ++ [Task (model.newTodo |> String.trim) False])
 
     else
         model
+
+
+isValidTaskString: String -> Bool
+isValidTaskString newTodo =
+    (newTodo |> String.trim |> String.length) > 0
