@@ -46,6 +46,7 @@ type Msg
     = InputChanged String
     | KeyPressed Int
     | MarkAllCompleted Bool
+    | TaskCompletionToggled Int Bool
 
 
 update : Msg -> Model -> Model
@@ -59,6 +60,8 @@ update msg model =
 
         MarkAllCompleted completed ->
             { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
+
+        TaskCompletionToggled index completed -> { model | tasks = toggleTaskCompletion model.tasks index completed }
 
 
 
@@ -95,18 +98,18 @@ renderTodos { tasks } =
         [
             H.input [Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted] [],
             H.label [Attr.for inputId] [H.text "Mark all as complete"],
-            H.ul [Attr.class "todo-list"] (List.map renderTask tasks)
+            H.ul [Attr.class "todo-list"] (List.indexedMap renderTask tasks)
         ]
 
 
-renderTask: Task -> H.Html Msg
-renderTask task =
+renderTask: Int -> Task -> H.Html Msg
+renderTask index task =
     H.li
         [Attr.class (if task.completed then "completed" else "")]
         [
             H.div [Attr.class "view"]
             [
-                H.input [Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed] [],
+                H.input [Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled index)] [],
                 H.label [] [H.text task.todo]
             ]
         ]
@@ -141,3 +144,14 @@ isValidTaskString newTodo =
         isGreaterThanZero = (<) 0
     in
         newTodo |> String.trim |> String.length |> isGreaterThanZero
+
+
+toggleTaskCompletion: List Task -> Int -> Bool -> List Task
+toggleTaskCompletion tasks targetIndex completed =
+    let
+        toggler index task =
+            if index == targetIndex
+            then { task | completed = completed }
+            else task
+    in
+        List.indexedMap toggler tasks
