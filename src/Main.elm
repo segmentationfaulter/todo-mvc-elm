@@ -5,7 +5,6 @@ import Html as H
 import Html.Attributes as Attr
 import Html.Events as Events
 import Json.Decode as Decode
-import String
 
 
 main =
@@ -66,7 +65,10 @@ view : Model -> H.Html Msg
 view model =
     H.section
         [ Attr.class "todoapp" ]
-        [ inputElement model ]
+        [
+            inputElement model,
+            if List.isEmpty model.tasks then H.text "" else renderTodos model
+        ]
 
 
 inputElement : Model -> H.Html Msg
@@ -75,6 +77,34 @@ inputElement model =
         [ Attr.class "header" ]
         [ H.h1 [] [ H.text "todos" ]
         , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged, onKeyUp KeyPressed, Attr.value model.newTodo ] []
+        ]
+
+
+renderTodos: Model -> H.Html Msg
+renderTodos { tasks } =
+    let
+        inputId = "toggle-all"
+    in
+    
+    H.section
+        [Attr.class "main"]
+        [
+            H.input [Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox"] [],
+            H.label [Attr.for inputId] [H.text "Mark all as complete"],
+            H.ul [Attr.class "todo-list"] (List.map renderTask tasks)
+        ]
+
+
+renderTask: Task -> H.Html Msg
+renderTask task =
+    H.li
+        [Attr.class (if task.completed then "completed" else "")]
+        [
+            H.div [Attr.class "view"]
+            [
+                H.input [Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed] [],
+                H.label [] [H.text task.todo]
+            ]
         ]
 
 
