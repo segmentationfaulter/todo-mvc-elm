@@ -93,7 +93,7 @@ createNewTodo keyCode model =
             13
     in
     if keyCode == enterKeyCode then
-        Model "" (Task model.newTodo False :: model.tasks)
+        Model "" (model.tasks ++ [Task model.newTodo False])
 
     else
         model
