@@ -4,6 +4,7 @@ import Browser
 import Html as H
 import Html.Attributes as Attr
 import Html.Events as Events
+import Html.Keyed as HtmlKeyed
 import Json.Decode as Decode
 
 
@@ -61,7 +62,8 @@ update msg model =
         MarkAllCompleted completed ->
             { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
 
-        TaskCompletionToggled index completed -> { model | tasks = toggleTaskCompletion model.tasks index completed }
+        TaskCompletionToggled index completed ->
+            { model | tasks = toggleTaskCompletion model.tasks index completed }
 
 
 
@@ -72,9 +74,12 @@ view : Model -> H.Html Msg
 view model =
     H.section
         [ Attr.class "todoapp" ]
-        [
-            inputElement model,
-            if List.isEmpty model.tasks then H.text "" else renderTodos model
+        [ inputElement model
+        , if List.isEmpty model.tasks then
+            H.text ""
+
+          else
+            renderTodos model
         ]
 
 
@@ -87,32 +92,43 @@ inputElement model =
         ]
 
 
-renderTodos: Model -> H.Html Msg
+renderTodos : Model -> H.Html Msg
 renderTodos { tasks } =
     let
-        inputId = "toggle-all"
+        inputId =
+            "toggle-all"
     in
-    
     H.section
-        [Attr.class "main"]
-        [
-            H.input [Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted] [],
-            H.label [Attr.for inputId] [H.text "Mark all as complete"],
-            H.ul [Attr.class "todo-list"] (List.indexedMap renderTask tasks)
+        [ Attr.class "main" ]
+        [ H.input [ Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted ] []
+        , H.label [ Attr.for inputId ] [ H.text "Mark all as complete" ]
+        , HtmlKeyed.ul [ Attr.class "todo-list" ] (List.indexedMap renderTask tasks)
         ]
 
 
-renderTask: Int -> Task -> H.Html Msg
+renderTask : Int -> Task -> (String, H.Html Msg)
 renderTask index task =
-    H.li
-        [Attr.class (if task.completed then "completed" else "")]
-        [
-            H.div [Attr.class "view"]
-            [
-                H.input [Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled index)] [],
-                H.label [] [H.text task.todo]
-            ]
-        ]
+    let
+        taskHtml =
+            H.li
+                [ Attr.class
+                    (if task.completed then
+                        "completed"
+
+                     else
+                        ""
+                    )
+                ]
+                [ H.div [ Attr.class "view" ]
+                    [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled index) ] []
+                    , H.label [] [ H.text task.todo ]
+                    ]
+                ]
+
+        key =
+            String.fromInt index
+    in
+        (key, taskHtml)
 
 
 
@@ -130,28 +146,30 @@ createNewTodo keyCode model =
         enterKeyCode =
             13
     in
-    if keyCode == enterKeyCode && isValidTaskString model.newTodo
-    then
-        Model "" (model.tasks ++ [Task (model.newTodo |> String.trim) False])
+    if keyCode == enterKeyCode && isValidTaskString model.newTodo then
+        Model "" (model.tasks ++ [ Task (model.newTodo |> String.trim) False ])
 
     else
         model
 
 
-isValidTaskString: String -> Bool
+isValidTaskString : String -> Bool
 isValidTaskString newTodo =
     let
-        isGreaterThanZero = (<) 0
+        isGreaterThanZero =
+            (<) 0
     in
-        newTodo |> String.trim |> String.length |> isGreaterThanZero
+    newTodo |> String.trim |> String.length |> isGreaterThanZero
 
 
-toggleTaskCompletion: List Task -> Int -> Bool -> List Task
+toggleTaskCompletion : List Task -> Int -> Bool -> List Task
 toggleTaskCompletion tasks targetIndex completed =
     let
         toggler index task =
-            if index == targetIndex
-            then { task | completed = completed }
-            else task
+            if index == targetIndex then
+                { task | completed = completed }
+
+            else
+                task
     in
-        List.indexedMap toggler tasks
+    List.indexedMap toggler tasks
