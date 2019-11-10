@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "parcel index.html",
-    "build": "parcel build index.html"
+    "build": "parcel build index.html",
+    "deploy": "surge"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,8 @@
   "devDependencies": {
     "elm-hot": "^1.1.3",
     "node-elm-compiler": "^5.0.4",
-    "parcel-bundler": "^1.12.4"
+    "parcel-bundler": "^1.12.4",
+    "surge": "^0.21.3"
   },
   "dependencies": {
     "todomvc-app-css": "^2.3.0",
