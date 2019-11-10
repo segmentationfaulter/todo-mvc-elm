@@ -24,6 +24,7 @@ type alias Task =
     { id : Int
     , todo : String
     , completed : Bool
+    , editing : Bool
     }
 
 
@@ -52,6 +53,7 @@ type Msg
     | MarkAllCompleted Bool
     | TaskCompletionToggled Int Bool
     | DeleteTask Int
+    | ToggleEditingMode Int
 
 
 update : Msg -> Model -> Model
@@ -71,6 +73,9 @@ update msg model =
 
         DeleteTask id ->
             { model | tasks = deleteTask id model.tasks }
+
+        ToggleEditingMode id ->
+            { model | tasks = toggleEditingState id model.tasks }
 
 
 
@@ -128,12 +133,20 @@ renderTask task =
                      else
                         ""
                     )
+                , Attr.class
+                    (if task.editing then
+                        "editing"
+
+                     else
+                        ""
+                    )
                 ]
                 [ H.div [ Attr.class "view" ]
                     [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled task.id) ] []
-                    , H.label [] [ H.text task.todo ]
+                    , H.label [ Events.onDoubleClick (ToggleEditingMode task.id) ] [ H.text task.todo ]
                     , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
-                    ]
+                    ],
+                  H.input [Attr.class "edit", Attr.value task.todo] []
                 ]
 
         key =
@@ -158,7 +171,7 @@ createNewTodo keyCode model =
             13
     in
     if keyCode == enterKeyCode && isValidTaskString model.newTodo then
-        Model "" (model.tasks ++ [ Task model.uid (model.newTodo |> String.trim) False ]) (model.uid + 1)
+        Model "" (model.tasks ++ [ Task model.uid (model.newTodo |> String.trim) False False ]) (model.uid + 1)
 
     else
         model
@@ -189,3 +202,16 @@ toggleTaskCompletion tasks targetId completed =
 deleteTask : Int -> List Task -> List Task
 deleteTask targetId tasks =
     List.filter (\task -> task.id /= targetId) tasks
+
+
+toggleEditingState : Int -> List Task -> List Task
+toggleEditingState targetId tasks =
+    let
+        toggler task =
+            if task.id == targetId then
+                { task | editing = not task.editing }
+
+            else
+                task
+    in
+    List.map toggler tasks
