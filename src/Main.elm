@@ -54,6 +54,8 @@ type Msg
     | TaskCompletionToggled Int Bool
     | DeleteTask Int
     | ToggleEditingMode Int
+    | TaskUpdated Int String
+    | SaveUpdatedTask Int
 
 
 update : Msg -> Model -> Model
@@ -76,6 +78,12 @@ update msg model =
 
         ToggleEditingMode id ->
             { model | tasks = toggleEditingState id model.tasks }
+
+        TaskUpdated id updatedTask ->
+            { model | tasks = updateTask id updatedTask model.tasks}
+
+        SaveUpdatedTask id ->
+            { model | tasks = toggleEditingState id model.tasks}
 
 
 
@@ -146,7 +154,7 @@ renderTask task =
                     , H.label [ Events.onDoubleClick (ToggleEditingMode task.id) ] [ H.text task.todo ]
                     , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
                     ],
-                  H.input [Attr.class "edit", Attr.value task.todo] []
+                  H.input [Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id)] []
                 ]
 
         key =
@@ -221,3 +229,16 @@ toggleEditingState targetId tasks =
                 task
     in
     List.map toggler tasks
+
+
+updateTask : Int -> String -> List Task -> List Task
+updateTask targetId updatedTask tasks =
+    let
+        updater task =
+            if targetId == task.id then
+                { task | todo = updatedTask }
+            else
+                task
+    in
+        List.map updater tasks
+
