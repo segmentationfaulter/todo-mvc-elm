@@ -21,16 +21,16 @@ main =
 
 
 type alias Task =
-    { todo : String
+    { id : Int
+    , todo : String
     , completed : Bool
-    , id: Int
     }
 
 
 type alias Model =
     { newTodo : String
     , tasks : List Task
-    , uid: Int
+    , uid : Int
     }
 
 
@@ -70,7 +70,7 @@ update msg model =
             { model | tasks = toggleTaskCompletion model.tasks id completed }
 
         DeleteTask id ->
-            { model | tasks = deleteTask id model.tasks}
+            { model | tasks = deleteTask id model.tasks }
 
 
 
@@ -132,7 +132,7 @@ renderTask task =
                 [ H.div [ Attr.class "view" ]
                     [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled task.id) ] []
                     , H.label [] [ H.text task.todo ]
-                    , H.button [Attr.class "destroy", Events.onClick (DeleteTask task.id)] []
+                    , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
                     ]
                 ]
 
@@ -158,7 +158,7 @@ createNewTodo keyCode model =
             13
     in
     if keyCode == enterKeyCode && isValidTaskString model.newTodo then
-        Model "" (model.tasks ++ [ Task (model.newTodo |> String.trim) False model.uid ]) (model.uid + 1)
+        Model "" (model.tasks ++ [ Task model.uid (model.newTodo |> String.trim) False ]) (model.uid + 1)
 
     else
         model
@@ -186,6 +186,6 @@ toggleTaskCompletion tasks targetId completed =
     List.map toggler tasks
 
 
-deleteTask: Int -> List Task -> List Task
+deleteTask : Int -> List Task -> List Task
 deleteTask targetId tasks =
     List.filter (\task -> task.id /= targetId) tasks
