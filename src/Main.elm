@@ -23,12 +23,14 @@ main =
 type alias Task =
     { todo : String
     , completed : Bool
+    , id: Int
     }
 
 
 type alias Model =
     { newTodo : String
     , tasks : List Task
+    , uid: Int
     }
 
 
@@ -36,6 +38,7 @@ initialModel : Model
 initialModel =
     { newTodo = ""
     , tasks = []
+    , uid = 0
     }
 
 
@@ -63,11 +66,11 @@ update msg model =
         MarkAllCompleted completed ->
             { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
 
-        TaskCompletionToggled index completed ->
-            { model | tasks = toggleTaskCompletion model.tasks index completed }
+        TaskCompletionToggled id completed ->
+            { model | tasks = toggleTaskCompletion model.tasks id completed }
 
-        DeleteTask index ->
-            { model | tasks = removeFromList index model.tasks}
+        DeleteTask id ->
+            { model | tasks = deleteTask id model.tasks}
 
 
 
@@ -109,12 +112,12 @@ renderTodos { tasks } =
             [ Attr.class "main" ]
             [ H.input [ Attr.id inputId, Attr.class inputId, Attr.type_ "checkbox", Events.onCheck MarkAllCompleted ] []
             , H.label [ Attr.for inputId ] [ H.text "Mark all as complete" ]
-            , HtmlKeyed.ul [ Attr.class "todo-list" ] (List.indexedMap renderTask tasks)
+            , HtmlKeyed.ul [ Attr.class "todo-list" ] (List.map renderTask tasks)
             ]
 
 
-renderTask : Int -> Task -> ( String, H.Html Msg )
-renderTask index task =
+renderTask : Task -> ( String, H.Html Msg )
+renderTask task =
     let
         taskHtml =
             H.li
@@ -127,14 +130,14 @@ renderTask index task =
                     )
                 ]
                 [ H.div [ Attr.class "view" ]
-                    [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled index) ] []
+                    [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled task.id) ] []
                     , H.label [] [ H.text task.todo ]
-                    , H.button [Attr.class "destroy", Events.onClick (DeleteTask index)] []
+                    , H.button [Attr.class "destroy", Events.onClick (DeleteTask task.id)] []
                     ]
                 ]
 
         key =
-            String.fromInt index
+            String.fromInt task.id
     in
     ( key, taskHtml )
 
@@ -155,7 +158,7 @@ createNewTodo keyCode model =
             13
     in
     if keyCode == enterKeyCode && isValidTaskString model.newTodo then
-        Model "" (model.tasks ++ [ Task (model.newTodo |> String.trim) False ])
+        Model "" (model.tasks ++ [ Task (model.newTodo |> String.trim) False model.uid ]) (model.uid + 1)
 
     else
         model
@@ -171,18 +174,18 @@ isValidTaskString newTodo =
 
 
 toggleTaskCompletion : List Task -> Int -> Bool -> List Task
-toggleTaskCompletion tasks targetIndex completed =
+toggleTaskCompletion tasks targetId completed =
     let
-        toggler index task =
-            if index == targetIndex then
+        toggler task =
+            if task.id == targetId then
                 { task | completed = completed }
 
             else
                 task
     in
-    List.indexedMap toggler tasks
+    List.map toggler tasks
 
 
-removeFromList: Int -> List a -> List a
-removeFromList i xs =
-  (List.take i xs) ++ (List.drop (i+1) xs) 
+deleteTask: Int -> List Task -> List Task
+deleteTask targetId tasks =
+    List.filter (\task -> task.id /= targetId) tasks
