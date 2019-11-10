@@ -5,7 +5,7 @@ import Html as H
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Keyed as HtmlKeyed
-import Json.Decode as Decode
+import Json.Decode as Json
 
 
 main =
@@ -49,7 +49,7 @@ initialModel =
 
 type Msg
     = InputChanged String
-    | KeyPressed Int
+    | CreateTask
     | MarkAllCompleted Bool
     | TaskCompletionToggled Int Bool
     | DeleteTask Int
@@ -62,8 +62,8 @@ update msg model =
         InputChanged newTodo ->
             { model | newTodo = newTodo }
 
-        KeyPressed keyCode ->
-            createNewTodo keyCode model
+        CreateTask ->
+            createNewTodo model
 
         MarkAllCompleted completed ->
             { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
@@ -96,7 +96,7 @@ inputElement model =
     H.header
         [ Attr.class "header" ]
         [ H.h1 [] [ H.text "todos" ]
-        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged, onKeyUp KeyPressed, Attr.value model.newTodo ] []
+        , H.input [ Attr.class "new-todo", Attr.placeholder "What needs to be done?", Attr.autofocus True, Events.onInput InputChanged, onEnter CreateTask, Attr.value model.newTodo ] []
         ]
 
 
@@ -159,18 +159,24 @@ renderTask task =
 -- Helpers
 
 
-onKeyUp : (Int -> msg) -> H.Attribute msg
-onKeyUp tagger =
-    Events.on "keyup" (Decode.map tagger Events.keyCode)
-
-
-createNewTodo : Int -> Model -> Model
-createNewTodo keyCode model =
+onEnter : Msg -> H.Attribute Msg
+onEnter msg =
     let
         enterKeyCode =
             13
+        isEnterPressed keyCode =
+            if keyCode == enterKeyCode then
+                Json.succeed msg
+            else
+                Json.fail "Not enter"
     in
-    if keyCode == enterKeyCode && isValidTaskString model.newTodo then
+        Events.on "keyup" (Json.andThen isEnterPressed Events.keyCode)
+    
+
+
+createNewTodo : Model -> Model
+createNewTodo model =
+    if isValidTaskString model.newTodo then
         Model "" (model.tasks ++ [ Task model.uid (model.newTodo |> String.trim) False False ]) (model.uid + 1)
 
     else
