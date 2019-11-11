@@ -6,13 +6,16 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Keyed as HtmlKeyed
 import Json.Decode as Json
+import Platform.Sub as Sub
+import Platform.Cmd as Cmd
 
 
 main =
-    Browser.sandbox
-        { init = initialModel
+    Browser.element
+        { init = (\() -> (initialModel, Cmd.none))
         , view = view
         , update = update
+        , subscriptions = (\model -> Sub.none)
         }
 
 
@@ -59,35 +62,35 @@ type Msg
     | ClearCompletedTasks
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         InputChanged newTodo ->
-            { model | newTodo = newTodo }
+            ({ model | newTodo = newTodo }, Cmd.none)
 
         CreateTask ->
-            createNewTodo model
+            (createNewTodo model, Cmd.none)
 
         MarkAllCompleted completed ->
-            { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }
+            ({ model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }, Cmd.none)
 
         TaskCompletionToggled id completed ->
-            { model | tasks = toggleTaskCompletion model.tasks id completed }
+            ({ model | tasks = toggleTaskCompletion model.tasks id completed }, Cmd.none)
 
         DeleteTask id ->
-            { model | tasks = deleteTask id model.tasks }
+            ({ model | tasks = deleteTask id model.tasks }, Cmd.none)
 
         EnterEditingMode id ->
-            { model | tasks = setEditingField id True model.tasks }
+            ({ model | tasks = setEditingField id True model.tasks }, Cmd.none)
 
         TaskUpdated id updatedTask ->
-            { model | tasks = updateTask id updatedTask model.tasks }
+            ({ model | tasks = updateTask id updatedTask model.tasks }, Cmd.none)
 
         SaveUpdatedTask id ->
-            { model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }
+            ({ model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }, Cmd.none)
 
         ClearCompletedTasks ->
-            { model | tasks = List.filter (\task -> not task.completed) model.tasks }
+            ({ model | tasks = List.filter (\task -> not task.completed) model.tasks }, Cmd.none)
 
 
 
