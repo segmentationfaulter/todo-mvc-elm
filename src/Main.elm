@@ -83,7 +83,7 @@ update msg model =
             { model | tasks = updateTask id updatedTask model.tasks}
 
         SaveUpdatedTask id ->
-            { model | tasks = toggleEditingState id model.tasks}
+            { model | tasks = model.tasks |> filterInvalidTasks |> toggleEditingState id }
 
 
 
@@ -242,3 +242,7 @@ updateTask targetId updatedTask tasks =
     in
         List.map updater tasks
 
+
+filterInvalidTasks : List Task -> List Task
+filterInvalidTasks tasks =
+    List.filter (\task -> isValidTaskString task.todo) tasks
