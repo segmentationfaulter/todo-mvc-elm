@@ -96,11 +96,18 @@ update msg model =
 
 view : Model -> H.Html Msg
 view model =
-    H.section
-        [ Attr.class "todoapp" ]
-        [ inputElement model
-        , renderTodos model
-        , renderFooter model
+    H.div []
+        [ H.section
+            [ Attr.class "todoapp" ]
+            [ inputElement model
+            , renderTodos model
+            , renderFooter model
+            ]
+        , H.footer [ Attr.class "info" ]
+            [ H.p [] [ H.text "Double-click to edit a todo" ]
+            , H.p [] [ H.text "Created by ", H.a [ Attr.href "https://github.com/segmentationfaulter/todo-mvc-elm" ] [ H.text "Muhammad Saqib" ] ]
+            , H.p [] [ H.text "Part of ", H.a [ Attr.href "http://www.todomvc.com" ] [ H.text "TodoMVC" ] ]
+            ]
         ]
 
 
