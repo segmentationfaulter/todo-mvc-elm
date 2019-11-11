@@ -56,6 +56,7 @@ type Msg
     | EnterEditingMode Int
     | TaskUpdated Int String
     | SaveUpdatedTask Int
+    | ClearCompletedTasks
 
 
 update : Msg -> Model -> Model
@@ -84,6 +85,9 @@ update msg model =
 
         SaveUpdatedTask id ->
             { model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }
+
+        ClearCompletedTasks ->
+            { model | tasks = List.filter (\task -> not task.completed) model.tasks }
 
 
 
@@ -219,7 +223,7 @@ renderButtonToClearCompletedTasks tasks =
     in
     if showButton then
         H.button
-            [ Attr.class "clear-completed" ]
+            [ Attr.class "clear-completed", Events.onClick ClearCompletedTasks ]
             [ H.text "Clear completed" ]
 
     else
