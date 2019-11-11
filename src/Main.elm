@@ -53,7 +53,7 @@ type Msg
     | MarkAllCompleted Bool
     | TaskCompletionToggled Int Bool
     | DeleteTask Int
-    | ToggleEditingMode Int
+    | EnterEditingMode Int
     | TaskUpdated Int String
     | SaveUpdatedTask Int
 
@@ -76,14 +76,14 @@ update msg model =
         DeleteTask id ->
             { model | tasks = deleteTask id model.tasks }
 
-        ToggleEditingMode id ->
-            { model | tasks = toggleEditingState id model.tasks }
+        EnterEditingMode id ->
+            { model | tasks = setEditingField id True model.tasks }
 
         TaskUpdated id updatedTask ->
             { model | tasks = updateTask id updatedTask model.tasks}
 
         SaveUpdatedTask id ->
-            { model | tasks = model.tasks |> filterInvalidTasks |> toggleEditingState id }
+            { model | tasks = model.tasks |> filterInvalidTasks |> setEditingField id False }
 
 
 
@@ -151,10 +151,10 @@ renderTask task =
                 ]
                 [ H.div [ Attr.class "view" ]
                     [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled task.id) ] []
-                    , H.label [ Events.onDoubleClick (ToggleEditingMode task.id) ] [ H.text task.todo ]
+                    , H.label [ Events.onDoubleClick (EnterEditingMode task.id) ] [ H.text task.todo ]
                     , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
                     ],
-                  H.input [Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id)] []
+                  H.input [Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id), Events.onBlur (SaveUpdatedTask task.id)] []
                 ]
 
         key =
@@ -218,17 +218,17 @@ deleteTask targetId tasks =
     List.filter (\task -> task.id /= targetId) tasks
 
 
-toggleEditingState : Int -> List Task -> List Task
-toggleEditingState targetId tasks =
+setEditingField : Int -> Bool -> List Task -> List Task
+setEditingField targetId editing tasks =
     let
-        toggler task =
+        updater task =
             if task.id == targetId then
-                { task | editing = not task.editing }
+                { task | editing = editing }
 
             else
                 task
     in
-    List.map toggler tasks
+    List.map updater tasks
 
 
 updateTask : Int -> String -> List Task -> List Task
