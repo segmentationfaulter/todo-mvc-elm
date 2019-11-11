@@ -8,6 +8,8 @@ import Html.Keyed as HtmlKeyed
 import Json.Decode as Json
 import Platform.Sub as Sub
 import Platform.Cmd as Cmd
+import Browser.Dom as Dom
+import Task
 
 
 main =
@@ -17,6 +19,8 @@ main =
         , update = update
         , subscriptions = (\model -> Sub.none)
         }
+
+editTaskFieldId = "task-editor"
 
 
 
@@ -60,6 +64,7 @@ type Msg
     | TaskUpdated Int String
     | SaveUpdatedTask Int
     | ClearCompletedTasks
+    | NoOp
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -81,7 +86,7 @@ update msg model =
             ({ model | tasks = deleteTask id model.tasks }, Cmd.none)
 
         EnterEditingMode id ->
-            ({ model | tasks = setEditingField id True model.tasks }, Cmd.none)
+            ({ model | tasks = setEditingField id True model.tasks }, Task.attempt (\_ -> NoOp) (Dom.focus editTaskFieldId))
 
         TaskUpdated id updatedTask ->
             ({ model | tasks = updateTask id updatedTask model.tasks }, Cmd.none)
@@ -91,6 +96,9 @@ update msg model =
 
         ClearCompletedTasks ->
             ({ model | tasks = List.filter (\task -> not task.completed) model.tasks }, Cmd.none)
+
+        NoOp ->
+            (model, Cmd.none)
 
 
 
@@ -169,7 +177,7 @@ renderTask task =
                     , H.label [ Events.onDoubleClick (EnterEditingMode task.id) ] [ H.text task.todo ]
                     , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
                     ]
-                , H.input [ Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id), Events.onBlur (SaveUpdatedTask task.id) ] []
+                , H.input [ Attr.id editTaskFieldId, Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id), Events.onBlur (SaveUpdatedTask task.id) ] []
                 ]
 
         key =
