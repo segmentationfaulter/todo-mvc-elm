@@ -80,7 +80,7 @@ update msg model =
             { model | tasks = setEditingField id True model.tasks }
 
         TaskUpdated id updatedTask ->
-            { model | tasks = updateTask id updatedTask model.tasks}
+            { model | tasks = updateTask id updatedTask model.tasks }
 
         SaveUpdatedTask id ->
             { model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }
@@ -96,6 +96,7 @@ view model =
         [ Attr.class "todoapp" ]
         [ inputElement model
         , renderTodos model
+        , renderFooter model
         ]
 
 
@@ -153,14 +154,60 @@ renderTask task =
                     [ H.input [ Attr.class "toggle", Attr.type_ "checkbox", Attr.checked task.completed, Events.onCheck (TaskCompletionToggled task.id) ] []
                     , H.label [ Events.onDoubleClick (EnterEditingMode task.id) ] [ H.text task.todo ]
                     , H.button [ Attr.class "destroy", Events.onClick (DeleteTask task.id) ] []
-                    ],
-                  H.input [Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id), Events.onBlur (SaveUpdatedTask task.id)] []
+                    ]
+                , H.input [ Attr.class "edit", Attr.value task.todo, Events.onInput (TaskUpdated task.id), onEnter (SaveUpdatedTask task.id), Events.onBlur (SaveUpdatedTask task.id) ] []
                 ]
 
         key =
             String.fromInt task.id
     in
     ( key, taskHtml )
+
+
+renderFooter : Model -> H.Html Msg
+renderFooter model =
+    let
+        showFooter =
+            not (List.isEmpty model.tasks)
+    in
+    if showFooter then
+        H.footer
+            [ Attr.class "footer" ]
+            [ renderItemsLeft model.tasks
+            ]
+
+    else
+        H.text ""
+
+
+renderItemsLeft : List Task -> H.Html Msg
+renderItemsLeft tasks =
+    let
+        reducer task itemsLeft =
+            if task.completed then
+                itemsLeft
+
+            else
+                itemsLeft + 1
+
+        defaultForItemsLeft =
+            0
+
+        itemsLeftCount =
+            List.foldl reducer defaultForItemsLeft tasks
+
+        itemsText =
+            if itemsLeftCount == 1 then
+                "item"
+
+            else
+                "items"
+    in
+    H.span
+        [ Attr.class "todo-count" ]
+        [ H.strong [] [ H.text (String.fromInt itemsLeftCount) ]
+        , H.text (" " ++ itemsText ++ " left")
+        ]
 
 
 
@@ -172,14 +219,15 @@ onEnter msg =
     let
         enterKeyCode =
             13
+
         isEnterPressed keyCode =
             if keyCode == enterKeyCode then
                 Json.succeed msg
+
             else
                 Json.fail "Not enter"
     in
-        Events.on "keyup" (Json.andThen isEnterPressed Events.keyCode)
-    
+    Events.on "keyup" (Json.andThen isEnterPressed Events.keyCode)
 
 
 createNewTodo : Model -> Model
@@ -237,10 +285,11 @@ updateTask targetId updatedTask tasks =
         updater task =
             if targetId == task.id then
                 { task | todo = updatedTask }
+
             else
                 task
     in
-        List.map updater tasks
+    List.map updater tasks
 
 
 filterInvalidTasks : List Task -> List Task
