@@ -174,6 +174,7 @@ renderFooter model =
         H.footer
             [ Attr.class "footer" ]
             [ renderItemsLeft model.tasks
+            , renderButtonToClearCompletedTasks model.tasks
             ]
 
     else
@@ -208,6 +209,21 @@ renderItemsLeft tasks =
         [ H.strong [] [ H.text (String.fromInt itemsLeftCount) ]
         , H.text (" " ++ itemsText ++ " left")
         ]
+
+
+renderButtonToClearCompletedTasks : List Task -> H.Html Msg
+renderButtonToClearCompletedTasks tasks =
+    let
+        showButton =
+            List.any (\task -> task.completed) tasks
+    in
+    if showButton then
+        H.button
+            [ Attr.class "clear-completed" ]
+            [ H.text "Clear completed" ]
+
+    else
+        H.text ""
 
 
 
