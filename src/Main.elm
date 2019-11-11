@@ -83,7 +83,7 @@ update msg model =
             { model | tasks = updateTask id updatedTask model.tasks}
 
         SaveUpdatedTask id ->
-            { model | tasks = model.tasks |> filterInvalidTasks |> setEditingField id False }
+            { model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }
 
 
 
@@ -246,3 +246,8 @@ updateTask targetId updatedTask tasks =
 filterInvalidTasks : List Task -> List Task
 filterInvalidTasks tasks =
     List.filter (\task -> isValidTaskString task.todo) tasks
+
+
+trimTasks : List Task -> List Task
+trimTasks tasks =
+    List.map (\task -> { task | todo = String.trim task.todo }) tasks
