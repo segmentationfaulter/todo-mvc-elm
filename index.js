@@ -1,5 +1,9 @@
 import { Elm } from './src/Main.elm'
 
-Elm.Main.init({
+const app = Elm.Main.init({
   node: document.getElementById('app')
+})
+
+app.ports.persistData.subscribe((data) => {
+  window.localStorage.setItem('todos-elm', JSON.stringify(data))
 })

@@ -1,26 +1,32 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
+import Browser.Dom as Dom
 import Html as H
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Keyed as HtmlKeyed
 import Json.Decode as Json
-import Platform.Sub as Sub
+import Json.Encode as Encode
 import Platform.Cmd as Cmd
-import Browser.Dom as Dom
+import Platform.Sub as Sub
 import Task
+
+
+port persistData : Encode.Value -> Cmd nothing
 
 
 main =
     Browser.element
-        { init = (\() -> (initialModel, Cmd.none))
+        { init = \() -> ( initialModel, Cmd.none )
         , view = view
-        , update = update
-        , subscriptions = (\model -> Sub.none)
+        , update = updateAndPersistData
+        , subscriptions = \model -> Sub.none
         }
 
-editTaskFieldId = "task-editor"
+
+editTaskFieldId =
+    "task-editor"
 
 
 
@@ -67,38 +73,47 @@ type Msg
     | NoOp
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         InputChanged newTodo ->
-            ({ model | newTodo = newTodo }, Cmd.none)
+            ( { model | newTodo = newTodo }, Cmd.none )
 
         CreateTask ->
-            (createNewTodo model, Cmd.none)
+            ( createNewTodo model, Cmd.none )
 
         MarkAllCompleted completed ->
-            ({ model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }, Cmd.none)
+            ( { model | tasks = List.map (\task -> { task | completed = completed }) model.tasks }, Cmd.none )
 
         TaskCompletionToggled id completed ->
-            ({ model | tasks = toggleTaskCompletion model.tasks id completed }, Cmd.none)
+            ( { model | tasks = toggleTaskCompletion model.tasks id completed }, Cmd.none )
 
         DeleteTask id ->
-            ({ model | tasks = deleteTask id model.tasks }, Cmd.none)
+            ( { model | tasks = deleteTask id model.tasks }, Cmd.none )
 
         EnterEditingMode id ->
-            ({ model | tasks = setEditingField id True model.tasks }, Task.attempt (\_ -> NoOp) (Dom.focus editTaskFieldId))
+            ( { model | tasks = setEditingField id True model.tasks }, Task.attempt (\_ -> NoOp) (Dom.focus editTaskFieldId) )
 
         TaskUpdated id updatedTask ->
-            ({ model | tasks = updateTask id updatedTask model.tasks }, Cmd.none)
+            ( { model | tasks = updateTask id updatedTask model.tasks }, Cmd.none )
 
         SaveUpdatedTask id ->
-            ({ model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }, Cmd.none)
+            ( { model | tasks = model.tasks |> filterInvalidTasks |> trimTasks |> setEditingField id False }, Cmd.none )
 
         ClearCompletedTasks ->
-            ({ model | tasks = List.filter (\task -> not task.completed) model.tasks }, Cmd.none)
+            ( { model | tasks = List.filter (\task -> not task.completed) model.tasks }, Cmd.none )
 
         NoOp ->
-            (model, Cmd.none)
+            ( model, Cmd.none )
+
+
+updateAndPersistData : Msg -> Model -> ( Model, Cmd Msg )
+updateAndPersistData msg model =
+    let
+        ( updatedModal, cmds ) =
+            update msg model
+    in
+    ( updatedModal, Cmd.batch [ cmds, persistData (encoderForDataToPersist updatedModal) ] )
 
 
 
@@ -338,3 +353,24 @@ filterInvalidTasks tasks =
 trimTasks : List Task -> List Task
 trimTasks tasks =
     List.map (\task -> { task | todo = String.trim task.todo }) tasks
+
+
+encoderForDataToPersist : Model -> Encode.Value
+encoderForDataToPersist model =
+    let
+        taskEncoder : Task -> Encode.Value
+        taskEncoder task =
+            Encode.object
+                [ ( "id", Encode.int task.id )
+                , ( "todo", Encode.string task.todo )
+                , ( "completed", Encode.bool task.completed )
+                ]
+
+        taskListEncoder : List Task -> Encode.Value
+        taskListEncoder tasks =
+            Encode.list taskEncoder tasks
+    in
+    Encode.object
+        [ ( "uid", Encode.int model.uid )
+        , ( "tasks", taskListEncoder model.tasks )
+        ]
