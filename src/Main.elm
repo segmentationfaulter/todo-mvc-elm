@@ -113,7 +113,16 @@ updateAndPersistData msg model =
         ( updatedModal, cmds ) =
             update msg model
     in
-    ( updatedModal, Cmd.batch [ cmds, persistData (encoderForDataToPersist updatedModal) ] )
+    ( updatedModal
+    , Cmd.batch
+        [ cmds
+        , if shouldPersistData msg then
+            persistData (encoderForDataToPersist updatedModal)
+
+          else
+            Cmd.none
+        ]
+    )
 
 
 
@@ -374,3 +383,22 @@ encoderForDataToPersist model =
         [ ( "uid", Encode.int model.uid )
         , ( "tasks", taskListEncoder model.tasks )
         ]
+
+
+shouldPersistData : Msg -> Bool
+shouldPersistData msg =
+    case msg of
+        InputChanged _ ->
+            False
+
+        EnterEditingMode _ ->
+            False
+
+        TaskUpdated _ _ ->
+            False
+
+        NoOp ->
+            False
+
+        _ ->
+            True
