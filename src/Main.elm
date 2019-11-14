@@ -20,7 +20,7 @@ main =
     Browser.element
         { init =
             \persistedData ->
-                ( persistedData |> decodeHydratedData |> getModelFromHydratedData, Cmd.none )
+                ( persistedData |> decodePersistedData |> getModelFromPersistedData, Cmd.none )
         , view = view
         , update = updateAndPersistData
         , subscriptions = \model -> Sub.none
@@ -406,32 +406,32 @@ shouldPersistData msg =
             True
 
 
-type alias HydratedTask =
+type alias PersistedTask =
     { id : Int, todo : String, completed : Bool }
 
 
-type alias HydratedModel =
-    { uid : Int, tasks : List HydratedTask }
+type alias PersistedModel =
+    { uid : Int, tasks : List PersistedTask }
 
 
-decodeHydratedData : Json.Value -> Result Json.Error HydratedModel
-decodeHydratedData rawData =
+decodePersistedData : Json.Value -> Result Json.Error PersistedModel
+decodePersistedData rawData =
     let
         taskDecoder =
-            Json.map3 HydratedTask (Json.field "id" Json.int) (Json.field "todo" Json.string) (Json.field "completed" Json.bool)
+            Json.map3 PersistedTask (Json.field "id" Json.int) (Json.field "todo" Json.string) (Json.field "completed" Json.bool)
 
         tasksListDecoder =
             Json.list taskDecoder
 
-        hydratedDataDecoder =
-            Json.map2 HydratedModel (Json.field "uid" Json.int) (Json.field "tasks" tasksListDecoder)
+        persistedDataDecoder =
+            Json.map2 PersistedModel (Json.field "uid" Json.int) (Json.field "tasks" tasksListDecoder)
     in
-    Json.decodeValue hydratedDataDecoder rawData
+    Json.decodeValue persistedDataDecoder rawData
 
 
-getModelFromHydratedData : Result Json.Error HydratedModel -> Model
-getModelFromHydratedData hydratedData =
-    case hydratedData of
+getModelFromPersistedData : Result Json.Error PersistedModel -> Model
+getModelFromPersistedData persistedData =
+    case persistedData of
         Err _ ->
             initialModel
 
