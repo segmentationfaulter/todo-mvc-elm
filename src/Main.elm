@@ -18,7 +18,9 @@ port persistData : Encode.Value -> Cmd nothing
 
 main =
     Browser.element
-        { init = \() -> ( initialModel, Cmd.none )
+        { init =
+            \persistedData ->
+                ( persistedData |> decodeHydratedData |> getModelFromHydratedData, Cmd.none )
         , view = view
         , update = updateAndPersistData
         , subscriptions = \model -> Sub.none
@@ -402,3 +404,36 @@ shouldPersistData msg =
 
         _ ->
             True
+
+
+type alias HydratedTask =
+    { id : Int, todo : String, completed : Bool }
+
+
+type alias HydratedModel =
+    { uid : Int, tasks : List HydratedTask }
+
+
+decodeHydratedData : Json.Value -> Result Json.Error HydratedModel
+decodeHydratedData rawData =
+    let
+        taskDecoder =
+            Json.map3 HydratedTask (Json.field "id" Json.int) (Json.field "todo" Json.string) (Json.field "completed" Json.bool)
+
+        tasksListDecoder =
+            Json.list taskDecoder
+
+        hydratedDataDecoder =
+            Json.map2 HydratedModel (Json.field "uid" Json.int) (Json.field "tasks" tasksListDecoder)
+    in
+    Json.decodeValue hydratedDataDecoder rawData
+
+
+getModelFromHydratedData : Result Json.Error HydratedModel -> Model
+getModelFromHydratedData hydratedData =
+    case hydratedData of
+        Err _ ->
+            initialModel
+
+        Ok data ->
+            { newTodo = "", uid = data.uid, tasks = List.map (\task -> { id = task.id, todo = task.todo, completed = task.completed, editing = False }) data.tasks }
